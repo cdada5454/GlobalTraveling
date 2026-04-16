@@ -1,0 +1,75 @@
+plugins {
+    id 'com.android.application'
+}
+
+def readConfig = { String name ->
+    def envValue = System.getenv(name)
+    if (envValue != null && !envValue.isBlank()) {
+        return envValue
+    }
+
+    def propValue = project.findProperty(name)
+    return propValue == null ? "" : propValue.toString()
+}
+
+def releaseKeystoreFile = readConfig("KEYSTORE_FILE")
+
+android {
+    namespace 'com.kankan.globaltraveling'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.kankan.globaltraveling"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        manifestPlaceholders = [
+                AMAP_API_KEY: readConfig("AMAP_API_KEY")
+        ]
+
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (!releaseKeystoreFile.isBlank()) {
+                storeFile file(releaseKeystoreFile)
+                storePassword readConfig("KEYSTORE_PASSWORD")
+                keyAlias readConfig("KEY_ALIAS")
+                keyPassword readConfig("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (!releaseKeystoreFile.isBlank()) {
+                signingConfig signingConfigs.release
+            }
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.cardview:cardview:1.0.0'
+
+    implementation 'com.amap.api:3dmap:9.8.2'
+    implementation 'com.amap.api:search:9.7.0'
+
+    compileOnly 'de.robv.android.xposed:api:82'
+}

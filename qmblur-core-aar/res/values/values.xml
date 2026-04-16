@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="BlurButtonView">
+        <attr name="android:text"/>
+        <attr name="android:textSize"/>
+        <attr name="android:textColor"/>
+        <attr name="android:icon"/>
+        <attr name="android:gravity"/>
+        <attr format="dimension" name="buttonBlurRadius"/>
+        <attr format="color" name="buttonOverlayColor"/>
+        <attr format="color" name="buttonTextColorPressed"/>
+        <attr format="color" name="buttonTextColorDisabled"/>
+        <attr format="boolean" name="buttonTextBold"/>
+        <attr format="dimension" name="buttonIconSize"/>
+        <attr format="dimension" name="buttonIconPadding"/>
+        <attr format="color" name="buttonIconTint"/>
+        <attr format="dimension" name="buttonCornerRadius"/>
+    </declare-styleable>
+    <declare-styleable name="BlurSwitchButtonView">
+        <attr format="color" name="baseColor"/>
+        <attr format="boolean" name="useSolidColorMode"/>
+        <attr format="color" name="solidOnColor"/>
+        <attr format="color" name="solidOffColor"/>
+    </declare-styleable>
+    <declare-styleable name="BlurTitlebarView">
+        <attr format="string" name="titleText"/>
+        <attr format="string" name="subtitleText"/>
+        <attr format="color" name="titleTextColor"/>
+        <attr format="color" name="subtitleTextColor"/>
+        <attr format="boolean" name="showBack"/>
+        <attr format="reference" name="backIcon"/>
+        <attr format="color" name="backIconTint"/>
+        <attr format="string" name="menuText"/>
+        <attr format="color" name="menuTextColor"/>
+        <attr format="reference" name="menuIcon"/>
+        <attr format="color" name="menuIconTint"/>
+        <attr format="boolean" name="centerTitle"/>
+    </declare-styleable>
+    <declare-styleable name="BlurView">
+        <attr format="dimension" name="blurRadius"/>
+        <attr format="color" name="overlayColor"/>
+        <attr format="dimension" name="cornerRadius"/>
+        <attr format="float" name="downsampleFactor"/>
+    </declare-styleable>
+    <declare-styleable name="ProgressiveBlurView">
+        <attr format="color" name="progressiveOverlayColor"/>
+        <attr format="enum" name="progressiveDirection">
+            <enum name="topToBottom" value="0"/>
+            <enum name="bottomToTop" value="1"/>
+            <enum name="leftToRight" value="2"/>
+            <enum name="rightToLeft" value="3"/>
+        </attr>
+        <attr format="integer" name="progressiveLayers"/>
+        <attr format="dimension" name="progressiveBlurRadius"/>
+    </declare-styleable>
+</resources>

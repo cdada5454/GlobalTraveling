@@ -1,0 +1,17 @@
+int attr item_iconSize 0x0
+int attr item_textBold 0x0
+int attr item_textSize 0x0
+int attr menu 0x0
+int attr navBlurRadius 0x0
+int attr navOverlayColor 0x0
+int attr navSelectedColor 0x0
+int attr navUnselectedColor 0x0
+int[] styleable BlurBottomNavigationView { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+int styleable BlurBottomNavigationView_item_iconSize 0
+int styleable BlurBottomNavigationView_item_textBold 1
+int styleable BlurBottomNavigationView_item_textSize 2
+int styleable BlurBottomNavigationView_menu 3
+int styleable BlurBottomNavigationView_navBlurRadius 4
+int styleable BlurBottomNavigationView_navOverlayColor 5
+int styleable BlurBottomNavigationView_navSelectedColor 6
+int styleable BlurBottomNavigationView_navUnselectedColor 7
