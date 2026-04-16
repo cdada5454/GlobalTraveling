@@ -57,9 +57,7 @@ import com.amap.api.services.help.InputtipsQuery;
 import com.amap.api.services.help.Tip;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.color.DynamicColors;
 import com.google.android.material.color.MaterialColors;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -109,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
     private Runnable searchRunnable;
     private String fixedMac;
     private String fixedSSID;
+    private boolean simulationStopPending;
     private double selectLat;
     private double selectLng;
     private int bottomPanelBaseMarginBottom = Integer.MIN_VALUE;
@@ -129,7 +128,6 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         } catch (Throwable ignored) {
         }
 
-        DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         savedState = savedInstanceState;
         applyEdgeToEdgeSystemBars();
@@ -176,7 +174,8 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         setStatusText(tvStatus.getText());
         etSearch = findViewById(R.id.et_search);
         if (etSearch != null) {
-            etSearch.setDropDownBackgroundResource(R.drawable.bg_search_dropdown_rounded);
+            etSearch.setVerticalScrollBarEnabled(false);
+            etSearch.post(this::syncSearchDropdownBounds);
         }
         historyContainer = findViewById(R.id.history_container);
         btnHistory = findViewById(R.id.btn_history);
@@ -307,6 +306,7 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
     }
 
     private void bindSearch() {
+        syncSearchDropdownBounds();
         etSearch.setThreshold(1);
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -351,7 +351,7 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
                     tip.getPoint().getLatitude(),
                     tip.getPoint().getLongitude()
             );
-            applyHistorySelection(item);
+            handleHistorySelection(item);
 
             InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
             if (imm != null) {
@@ -361,6 +361,18 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
             etSearch.setText("");
             etSearch.clearFocus();
         });
+    }
+
+    private void syncSearchDropdownBounds() {
+        if (etSearch == null || searchCard == null) {
+            return;
+        }
+
+        int cardWidth = searchCard.getWidth();
+        if (cardWidth > 0) {
+            etSearch.setDropDownWidth(cardWidth);
+            etSearch.setDropDownHorizontalOffset(-etSearch.getLeft());
+        }
     }
 
     private void bindActions() {
@@ -534,7 +546,7 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
     }
 
     private void refreshSimulationButton() {
-        boolean simRunning = isSimulationRunning();
+        boolean simRunning = isSimulationActiveForUi();
         if (simRunning) {
             SimulatedState simulated = readSimulatedState();
             if (simulated != null) {
@@ -586,6 +598,7 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
             etSearch.setTextColor(onSurface);
             etSearch.setHintTextColor(onSurfaceVariant);
             TextViewCompat.setCompoundDrawableTintList(etSearch, ColorStateList.valueOf(onSurfaceVariant));
+            etSearch.setDropDownBackgroundDrawable(buildSearchDropdownBackground(cardSurface, withAlpha(outlineVariant, 170)));
         }
         if (tvStatus != null) {
             tvStatus.setTextColor(onSurfaceVariant);
@@ -676,6 +689,15 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         return new RippleDrawable(ColorStateList.valueOf(withAlpha(rippleColor, 32)), shape, mask);
     }
 
+    private GradientDrawable buildSearchDropdownBackground(int fillColor, int strokeColor) {
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.RECTANGLE);
+        background.setCornerRadius(dp2px(27f));
+        background.setColor(fillColor);
+        background.setStroke(Math.max(1, dp2px(1f)), strokeColor);
+        return background;
+    }
+
     private void applyCardShadow(CardView card, float radiusDp, float elevationDp) {
         if (card == null) {
             return;
@@ -736,6 +758,10 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         } catch (Exception ignored) {
             return false;
         }
+    }
+
+    private boolean isSimulationActiveForUi() {
+        return !simulationStopPending && isSimulationRunning();
     }
 
     private void loadDefaultLocation() {
@@ -813,7 +839,9 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
 
     private void addHistoryChip(HistoryItem item) {
         MaterialCardView card = new MaterialCardView(this);
-        int chipSurface = MaterialColors.getColor(historyContainer, com.google.android.material.R.attr.colorSurfaceContainerHigh, Color.WHITE);
+        int chipBaseSurface = MaterialColors.getColor(historyContainer, com.google.android.material.R.attr.colorSurface, Color.WHITE);
+        int chipSurfaceContainer = MaterialColors.getColor(historyContainer, com.google.android.material.R.attr.colorSurfaceContainerHigh, chipBaseSurface);
+        int chipSurface = withAlpha(chipSurfaceContainer, isDarkMode() ? 230 : 246);
         int chipText = MaterialColors.getColor(historyContainer, com.google.android.material.R.attr.colorOnSurface, Color.parseColor("#1A1C1E"));
         int chipMuted = MaterialColors.getColor(historyContainer, com.google.android.material.R.attr.colorOnSurfaceVariant, Color.parseColor("#6B7280"));
         int chipStroke = withAlpha(MaterialColors.getColor(historyContainer, com.google.android.material.R.attr.colorOutlineVariant, Color.parseColor("#D9DDE3")), 170);
@@ -880,11 +908,13 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         int itemSurface = dialogBaseSurface;
         int onSurface = MaterialColors.getColor(container, com.google.android.material.R.attr.colorOnSurface, Color.parseColor("#1D1B20"));
         int onSurfaceVariant = MaterialColors.getColor(container, com.google.android.material.R.attr.colorOnSurfaceVariant, Color.parseColor("#49454F"));
-        int outlineVariant = MaterialColors.getColor(container, com.google.android.material.R.attr.colorOutlineVariant, Color.parseColor("#CAC4D0"));
         int tertiary = MaterialColors.getColor(container, com.google.android.material.R.attr.colorTertiary, Color.parseColor("#7D5260"));
 
         if (dialogView instanceof MaterialCardView) {
-            ((MaterialCardView) dialogView).setCardBackgroundColor(dialogSurface);
+            MaterialCardView dialogCard = (MaterialCardView) dialogView;
+            dialogCard.setCardBackgroundColor(dialogSurface);
+            dialogCard.setStrokeColor(Color.TRANSPARENT);
+            dialogCard.setStrokeWidth(0);
         }
 
         title.setTextColor(onSurface);
@@ -902,24 +932,18 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
             MaterialCardView card = itemView.findViewById(R.id.history_item_card);
             TextView name = itemView.findViewById(R.id.tv_history_item_name);
             TextView address = itemView.findViewById(R.id.tv_history_item_address);
-            TextView hint = itemView.findViewById(R.id.tv_history_item_hint);
 
             card.setCardBackgroundColor(itemSurface);
-            card.setStrokeColor(withAlpha(outlineVariant, 170));
-            card.setStrokeWidth(dp2px(1f));
+            card.setStrokeColor(Color.TRANSPARENT);
+            card.setStrokeWidth(0);
             name.setText(item.name);
             name.setTextColor(onSurface);
             address.setText(item.address);
             address.setTextColor(onSurfaceVariant);
-            hint.setTextColor(tertiary);
 
             itemView.setOnClickListener(v -> {
                 handleHistorySelection(item);
                 dialog.dismiss();
-            });
-            itemView.setOnLongClickListener(v -> {
-                showHistoryDetailDialog(item);
-                return true;
             });
             container.addView(itemView);
         }
@@ -927,20 +951,6 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         btnClose.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
-
-    private void showHistoryDetailDialog(HistoryItem item) {
-        if (item == null) {
-            return;
-        }
-
-        String message = getString(R.string.history_detail_message, item.address, item.lng, item.lat);
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(item.name)
-                .setMessage(message)
-                .setPositiveButton(R.string.confirm, null)
-                .show();
-    }
-
     private void applyHistorySelection(HistoryItem item) {
         if (item == null) {
             return;
@@ -958,10 +968,14 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         }
 
         boolean wasSimulating = isSimulationRunning();
+        if (wasSimulating) {
+            simulationStopPending = true;
+            updateSimulationUi(false, item.name);
+            writeToSystemTmp(STOP_SIMULATION_PAYLOAD, false, false);
+        }
         applyHistorySelection(item);
         if (wasSimulating) {
             updateSimulationUi(false, currentName);
-            writeToSystemTmp(STOP_SIMULATION_PAYLOAD, false, false);
         }
     }
 
@@ -976,6 +990,7 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         adapter.notifyDataSetChanged();
         runOnUiThread(() -> {
             if (etSearch.hasFocus() && etSearch.getText().length() > 0) {
+                syncSearchDropdownBounds();
                 etSearch.showDropDown();
             }
         });
@@ -992,11 +1007,11 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
             aMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).title(currentName));
         }
         setStatusText(getString(R.string.selected_location, currentName));
-        refreshStateSummary(currentName, isSimulationRunning());
+        refreshStateSummary(currentName, isSimulationActiveForUi());
     }
 
     private void refreshStateSummary(String locationText) {
-        refreshStateSummary(locationText, isSimulationRunning());
+        refreshStateSummary(locationText, isSimulationActiveForUi());
     }
 
     private void refreshStateSummary(String locationText, boolean simRunning) {
@@ -1110,6 +1125,7 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
                 os.flush();
                 int ret = process.waitFor();
                 runOnUiThread(() -> {
+                    simulationStopPending = false;
                     if (ret == 0) {
                         if (showToast) {
                             Toast.makeText(
@@ -1125,6 +1141,7 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
                 });
             } catch (Exception ignored) {
                 runOnUiThread(() -> {
+                    simulationStopPending = false;
                     Toast.makeText(this, R.string.write_config_failed, Toast.LENGTH_SHORT).show();
                     refreshSimulationButton();
                 });

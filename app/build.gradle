@@ -2,6 +2,14 @@ plugins {
     id 'com.android.application'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
+
 def readConfig = { String name ->
     def envValue = System.getenv(name)
     if (envValue != null && !envValue.isBlank()) {
@@ -9,7 +17,12 @@ def readConfig = { String name ->
     }
 
     def propValue = project.findProperty(name)
-    return propValue == null ? "" : propValue.toString()
+    if (propValue != null && !propValue.toString().isBlank()) {
+        return propValue.toString()
+    }
+
+    def localValue = localProperties.getProperty(name)
+    return localValue == null ? "" : localValue
 }
 
 def releaseKeystoreFile = readConfig("KEYSTORE_FILE")
