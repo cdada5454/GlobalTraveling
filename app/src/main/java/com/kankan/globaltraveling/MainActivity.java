@@ -175,6 +175,9 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         tvStatus = findViewById(R.id.tv_status);
         setStatusText(tvStatus.getText());
         etSearch = findViewById(R.id.et_search);
+        if (etSearch != null) {
+            etSearch.setDropDownBackgroundResource(R.drawable.bg_search_dropdown_rounded);
+        }
         historyContainer = findViewById(R.id.history_container);
         btnHistory = findViewById(R.id.btn_history);
         btnGoCurrent = findViewById(R.id.btn_go_current);
@@ -871,8 +874,10 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
         TextView btnClose = dialogView.findViewById(R.id.btn_history_dialog_close);
         LinearLayout container = dialogView.findViewById(R.id.history_dialog_container);
 
-        int dialogSurface = MaterialColors.getColor(container, com.google.android.material.R.attr.colorSurface, Color.WHITE);
-        int itemSurface = MaterialColors.getColor(container, com.google.android.material.R.attr.colorSurfaceContainerHigh, dialogSurface);
+        int dialogBaseSurface = MaterialColors.getColor(container, com.google.android.material.R.attr.colorSurface, Color.WHITE);
+        int dialogSurfaceContainer = MaterialColors.getColor(container, com.google.android.material.R.attr.colorSurfaceContainerHigh, dialogBaseSurface);
+        int dialogSurface = withAlpha(dialogSurfaceContainer, isDarkMode() ? 230 : 246);
+        int itemSurface = dialogBaseSurface;
         int onSurface = MaterialColors.getColor(container, com.google.android.material.R.attr.colorOnSurface, Color.parseColor("#1D1B20"));
         int onSurfaceVariant = MaterialColors.getColor(container, com.google.android.material.R.attr.colorOnSurfaceVariant, Color.parseColor("#49454F"));
         int outlineVariant = MaterialColors.getColor(container, com.google.android.material.R.attr.colorOutlineVariant, Color.parseColor("#CAC4D0"));
