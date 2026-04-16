@@ -11,6 +11,8 @@
     <string name="stop_simulation">停止模拟</string>
     <string name="history_dialog_title">历史位置</string>
     <string name="history_dialog_subtitle">点击可直接回到该位置，长按可查看模拟定位详情。</string>
+    <string name="history_detail_title">模拟定位详情</string>
+    <string name="history_detail_coordinates">纬度：%1$.6f\n经度：%2$.6f</string>
     <string name="close">关闭</string>
     <string name="usage_notice">使用须知</string>
     <string name="usage_message">本应用仅供技术研究与学习使用，请勿用于违规场景。继续即表示你已了解相关风险。</string>

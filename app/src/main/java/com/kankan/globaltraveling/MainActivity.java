@@ -945,12 +945,61 @@ public class MainActivity extends AppCompatActivity implements Inputtips.Inputti
                 handleHistorySelection(item);
                 dialog.dismiss();
             });
+            itemView.setOnLongClickListener(v -> {
+                showHistoryDetails(item);
+                return true;
+            });
             container.addView(itemView);
         }
 
         btnClose.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
+
+    private void showHistoryDetails(HistoryItem item) {
+        if (item == null) {
+            return;
+        }
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_history_detail, null, false);
+        TextView title = dialogView.findViewById(R.id.tv_history_detail_title);
+        TextView name = dialogView.findViewById(R.id.tv_history_detail_name);
+        TextView address = dialogView.findViewById(R.id.tv_history_detail_address);
+        TextView coordinates = dialogView.findViewById(R.id.tv_history_detail_coordinates);
+        TextView btnClose = dialogView.findViewById(R.id.btn_history_detail_close);
+
+        int dialogBaseSurface = MaterialColors.getColor(dialogView, com.google.android.material.R.attr.colorSurface, Color.WHITE);
+        int dialogSurfaceContainer = MaterialColors.getColor(dialogView, com.google.android.material.R.attr.colorSurfaceContainerHigh, dialogBaseSurface);
+        int dialogSurface = withAlpha(dialogSurfaceContainer, isDarkMode() ? 230 : 246);
+        int onSurface = MaterialColors.getColor(dialogView, com.google.android.material.R.attr.colorOnSurface, Color.parseColor("#1D1B20"));
+        int onSurfaceVariant = MaterialColors.getColor(dialogView, com.google.android.material.R.attr.colorOnSurfaceVariant, Color.parseColor("#49454F"));
+        int tertiary = MaterialColors.getColor(dialogView, com.google.android.material.R.attr.colorTertiary, Color.parseColor("#7D5260"));
+
+        if (dialogView instanceof MaterialCardView) {
+            MaterialCardView dialogCard = (MaterialCardView) dialogView;
+            dialogCard.setCardBackgroundColor(dialogSurface);
+            dialogCard.setStrokeColor(Color.TRANSPARENT);
+            dialogCard.setStrokeWidth(0);
+        }
+
+        title.setTextColor(onSurface);
+        name.setText(safeText(item.name, getString(R.string.target_location)));
+        name.setTextColor(onSurface);
+        address.setText(safeText(item.address, item.name));
+        address.setTextColor(onSurfaceVariant);
+        coordinates.setText(getString(R.string.history_detail_coordinates, item.lat, item.lng));
+        coordinates.setTextColor(onSurfaceVariant);
+        btnClose.setTextColor(tertiary);
+        btnClose.setBackgroundResource(resolveThemeResId(android.R.attr.selectableItemBackgroundBorderless));
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
     private void applyHistorySelection(HistoryItem item) {
         if (item == null) {
             return;
